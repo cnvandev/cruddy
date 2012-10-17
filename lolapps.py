@@ -3,6 +3,7 @@ import sys
 import os
 from google.protobuf.message import Message
 from google.protobuf.descriptor import FieldDescriptor
+from flask import Flask
 
 PROTO_FILE_SUFFIX = ".proto"
 PYTHON_FILE_SUFFIX = ".py"
@@ -16,6 +17,7 @@ destination_dir = "objects"
 html_dir = "html"
 
 type_hash = {}
+app = Flask(__name__)
 
 ''' Verifies the structure of the current working directory to make sure we have everything we need. '''
 def verify_structure():
@@ -51,7 +53,8 @@ def generate_protos():
 			object_name = proto[:len(PROTO_FILE_SUFFIX)]
 			generated.append(object_name + PYTHON_GENERATED_SUFFIX)
 		except Exception as ex:
-			print ex
+			sys.exit()
+
 
 	return generated
 
@@ -82,18 +85,53 @@ def generate_html_page(object_):
 
 	name = object_.__class__.__name__
 	output_file = open(os.path.join(html_dir, name + HTML_FILE_SUFFIX), 'w')
-	output_file.write("<html>")
-	output_file.write("<head><title>%s</title></head>" % name)
-	output_file.write("<body>")
+	output_file.write('''
+	<html>
+		<head>
+			<title>%s</title>
+			<link href="css/bootstrap.min.css" rel="stylesheet">
+			<style>
+		      body {
+		        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+		      }
+		    </style>
+		</head>
+		<body>
+
+			<div class="navbar navbar-inverse navbar-fixed-top">
+		      <div class="navbar-inner">
+		        <div class="container">
+		          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+		            <span class="icon-bar"></span>
+		            <span class="icon-bar"></span>
+		            <span class="icon-bar"></span>
+		          </a>
+		          <a class="brand" href="#">LOLapps</a>
+		          <div class="nav-collapse collapse">
+		            <ul class="nav">
+		              <li class="active"><a href="#">Home</a></li>
+		              <li><a href="#about">About</a></li>
+		              <li><a href="#contact">Contact</a></li>
+		            </ul>
+		          </div><!--/.nav-collapse -->
+		        </div>
+		      </div>
+		    </div>
+
+			<div class="container">
+	''' % name)
+
 	output_file.write("<h1>%s</h1>" % name)
 
-	output_file.write("<ul>")
 	for field in object_.DESCRIPTOR.fields:
-		output_file.write("<li>%s (%s)</li>" % (field.name, type_hash[field.type]))
-	output_file.write("</ul>")
-	
-	output_file.write("</body>")
-	output_file.write("</html>")
+		output_file.write('''<p><span class="muted">%s</span> %s</p>''' % (type_hash[field.type], field.name))
+	output_file.write('''
+			</div>
+			<script src="http://code.jquery.com/jquery-latest.js"></script>
+			<script src="js/bootstrap.min.js"></script>
+		</body>
+	</html>
+	''')
 	output_file.close()
 
 
@@ -103,6 +141,10 @@ def build_type_hash():
 		if field_type.startswith(PROTO_TYPE_PREFIX):
 			type_hash[getattr(FieldDescriptor, field_type)] = field_type[len(PROTO_TYPE_PREFIX):].lower()
 
+
+@app.route('/')
+def hello_world():
+    return 'Hello World!'
 
 if __name__ == "__main__":
 	build_type_hash()
@@ -115,3 +157,5 @@ if __name__ == "__main__":
 	clear_html_pages()
 	for generated_object in generated:
 		generate_html_page(generated_object)
+
+	app.run(debug=True)
