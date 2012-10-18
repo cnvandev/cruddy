@@ -3,7 +3,6 @@ TODO
 
 - Set up a Flask server to serve these pages properly.
 - Put the Twitter Bootstrap files somewhere more useful.
-- Create a "static" and "templates" folder which can contain the proper Jinja rendering shit.
 - Make the Flask server automatically create a database with a schema derived from this.
 - Make the Flask server automatically create routing points from the proto.
 - Create an add/view objects templace.
