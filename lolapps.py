@@ -3,7 +3,7 @@ import sys
 import os
 from google.protobuf.message import Message
 from google.protobuf.descriptor import FieldDescriptor
-from flask import Flask
+from flask import Flask, render_template
 
 PROTO_FILE_SUFFIX = ".proto"
 PYTHON_FILE_SUFFIX = ".py"
@@ -14,7 +14,8 @@ PROTO_TYPE_PREFIX = "TYPE_"
 
 source_dir = "protos"
 destination_dir = "objects"
-html_dir = "html"
+html_dir = "templates"
+static_dir = "static"
 
 type_hash = {}
 app = Flask(__name__)
@@ -89,7 +90,7 @@ def generate_html_page(object_):
 	<html>
 		<head>
 			<title>%s</title>
-			<link href="css/bootstrap.min.css" rel="stylesheet">
+			<link href="/static/css/bootstrap.min.css" rel="stylesheet">
 			<style>
 		      body {
 		        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -128,7 +129,7 @@ def generate_html_page(object_):
 	output_file.write('''
 			</div>
 			<script src="http://code.jquery.com/jquery-latest.js"></script>
-			<script src="js/bootstrap.min.js"></script>
+			<script src="/static/js/bootstrap.min.js"></script>
 		</body>
 	</html>
 	''')
@@ -142,9 +143,9 @@ def build_type_hash():
 			type_hash[getattr(FieldDescriptor, field_type)] = field_type[len(PROTO_TYPE_PREFIX):].lower()
 
 
-@app.route('/')
-def hello_world():
-    return 'Hello World!'
+@app.route('/person/')
+def hello():
+    return render_template('Person.html')
 
 if __name__ == "__main__":
 	build_type_hash()
