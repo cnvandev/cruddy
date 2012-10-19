@@ -2,9 +2,5 @@ TODO
 ==============================================================================
 
 - Set up a Flask server to serve these pages properly.
-- Put the Twitter Bootstrap files somewhere more useful.
 - Make the Flask server automatically create a database with a schema derived from this.
-- Make the Flask server automatically create routing points from the proto.
 - Create an add/view objects templace.
-- Re-name this thing to "Crummy."
-- Turn this script into a proper object-oriented Python module that can be run from a fucking script like a man.

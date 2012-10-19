@@ -1,3 +1,4 @@
 templates/*
 objects/*
 protos/*
+*.pyc
