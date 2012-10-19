@@ -1,6 +1,5 @@
 TODO
 ==============================================================================
 
-- Set up a Flask server to serve these pages properly.
 - Make the Flask server automatically create a database with a schema derived from this.
-- Create an add/view objects templace.
+- Create an add/view objects template.
