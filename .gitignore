@@ -2,3 +2,5 @@ templates/*
 objects/*
 protos/*
 *.pyc
+*.sql
+*.db

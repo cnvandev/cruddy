@@ -1,5 +1,6 @@
 TODO
 ==============================================================================
 
-- Make the Flask server automatically create a database with a schema derived from this.
 - Create an add/view objects template.
+- Create a list all objects template.
+- Properly modularize the class.
