@@ -5,7 +5,7 @@ import os
 import sqlite3
 from google.protobuf.message import Message
 from google.protobuf.descriptor import FieldDescriptor
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 from contextlib import closing
 
 PROTO_FILE_SUFFIX = ".proto"
@@ -43,17 +43,20 @@ class Cruddy:
 
     def init_db(self):
         with closing(self.connect_db()) as db:
-            with self.app.open_resource(self.database) as f:
+            with self.app.open_resource(self.schema_file) as f:
                 db.cursor().executescript(f.read())
             db.commit()
+        self.register_db_connections()
+
 
     def register_db_connections(self):
-        def before_request(self):
-            g.db = connect_db()
-        def after_request(self):
-            g.db.close()
-        self.app.before_request_funcs[None].append(before_request)
-        self.app.after_request_funcs[None].append(after_request)
+        def before_request():
+            self.db = self.connect_db()
+        def after_request(response):
+            self.db.close()
+            return response
+        self.app.before_request(before_request)
+        self.app.after_request(after_request)
 
 
     ''' Verifies the structure of the current working directory to make sure we have everything we need. '''
@@ -115,17 +118,67 @@ class Cruddy:
                 os.unlink(path)
 
 
-    ''' Generates an HTML page for the object! '''
-    def generate_html_page(self, object_):
-        if not isinstance(object_, Message):
-            raise Exception("You should only be generating HTML of Protocol Buffer objects!")
-
-        name = object_.__class__.__name__
-        output_file = open(os.path.join(self.html_dir, name.lower() + HTML_FILE_SUFFIX), 'w')
+    def generate_list_page(self, object_):
+        name = self.get_name(object_)
+        output_file = open(os.path.join(self.html_dir, name.lower() + "_list" + HTML_FILE_SUFFIX), 'w')
         output_file.write('''
+            {% extends "base.html" %}
+            {% block body %}
+            {% for entry in entries %}
+              <h2>{{ entry.name }}</h2>
+            {% else %}''')
+        output_file.write('''
+              <em>Nothing found! Maybe you should <a href="/%s/new/">add a new one</a>?</em>\n''' % name.lower()) 
+        output_file.write('''
+            {% endfor %}
+            {% endblock %}\n''')
+        output_file.close()
+
+
+    ''' Generates an HTML page for the object! '''
+    def generate_view_page(self, object_):
+        name = self.get_name(object_)
+        output_file = open(os.path.join(self.html_dir, name.lower() + "_view" + HTML_FILE_SUFFIX), 'w')
+        output_file.write('''
+            {% extends "base.html" %}
+            {% block body %}\n''')
+        for field in self.get_proto_fields(object_):
+            output_file.write('''<p>{{ entry.%s }} <span class="muted">%s</span></p>''' % (field.name, self.type_hash[field.type]))
+
+        output_file.write('''
+            {% endblock %}\n''')
+        output_file.close()
+
+
+    def generate_new_page(self, object_):
+        name = self.get_name(object_)
+        output_file = open(os.path.join(self.html_dir, name.lower() + "_new" + HTML_FILE_SUFFIX), 'w')
+
+        output_file.write('''
+            {% extends "base.html" %}
+            {% block body %}\n''')
+        output_file.write('''<form action="/%s/add/" method="POST">''' % name.lower())
+        for field in self.get_proto_fields(object_):
+            output_file.write('''<p>%s <input type="text" name="%s"></p>''' % (field.name, field.name.lower()))
+        
+        output_file.write('''
+                <input type="submit" text="Submit">
+            </form>
+            {% endblock %}\n''')
+        output_file.close()
+
+
+    def generate_base_page(self):
+        output_file = open(os.path.join(self.html_dir, "base" + HTML_FILE_SUFFIX), 'w')
+        output_file.write(self.generate_base())
+        output_file.close()
+
+
+    def generate_base(self):
+        return '''
         <html>
             <head>
-                <title>%s</title>
+                <title>{{ title }}</title>
                 <link href="/static/css/bootstrap.min.css" rel="stylesheet">
                 <style>
                   body {
@@ -150,26 +203,20 @@ class Cruddy:
                           <li><a href="#about">About</a></li>
                           <li><a href="#contact">Contact</a></li>
                         </ul>
-                      </div><!--/.nav-collapse -->
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div class="container">
-        ''' % name)
-
-        output_file.write("<h1>%s</h1>" % name)
-
-        for field in self.get_proto_fields(object_):
-            output_file.write('''<p><span class="muted">%s</span> %s</p>''' % (self.type_hash[field.type], field.name))
-        output_file.write('''
+                {% block body %}{% endblock %}
                 </div>
+
                 <script src="http://code.jquery.com/jquery-latest.js"></script>
                 <script src="/static/js/bootstrap.min.js"></script>
             </body>
         </html>
-        ''')
-        output_file.close()
+        '''
 
 
     ''' Creates a hash of the ProtocolBuffer types we have available, for lookup. '''
@@ -192,32 +239,86 @@ class Cruddy:
 
         # Clear out any existing HTML descriptor pages and rebuild them. 
         self.clear_html_pages()
+        self.generate_base_page()
         for generated_object in self.generated_objects:
-            self.generate_html_page(generated_object)
+            self.generate_list_page(generated_object)
+            self.generate_view_page(generated_object)
+            self.generate_new_page(generated_object)
+            self.build_routing(generated_object)
 
-        self.build_routings()
+        # Build a schema file and create a database for us to use.
         self.build_schema(self.generated_objects)
         self.init_db()
 
         return self.app
 
 
-    ''' Generates a function that will return the rendering for the specific object name '''
-    def generate_routing(self, object_name):
+    ''' Generates a function that will return the listing for the specific object name '''
+    def generate_list_routing(self, object_):
         def _function():
-            return render_template(object_name + HTML_FILE_SUFFIX)
+            fields = self.get_proto_fields(object_)
+            object_name = self.get_name(object_).lower()
+            cur = self.db.execute('select %s from %s order by id desc' % (", ".join(map(lambda field: field.name.lower(), fields)), object_name))
+            entries = []
+            for row in cur.fetchall():
+                entry = {}
+                for index in range(len(row)):
+                    entry[fields[index]] = row[index]
+                entries.append(entry)
+            return render_template(object_name + "_list" + HTML_FILE_SUFFIX, title=object_name, entries=entries)
+        return _function
+
+
+    ''' Generates a function that will return the rendering for the specific object name '''
+    def generate_view_routing(self, object_):
+        def _function(**kwargs):
+            fields = self.get_proto_fields(object_)
+            object_name = self.get_name(object_).lower()
+            sql = 'select %s from %s where id = %s' % (", ".join(map(lambda field: field.name.lower(), fields)), object_name, kwargs['id'])
+            cur = self.db.execute('select * from person')
+            args = {}
+            args["entry"] = cur.fetchall()[0]
+            args["title"] = self.get_name(object_)
+            return render_template(self.get_name(object_).lower() + "_view" + HTML_FILE_SUFFIX, **args)
+        return _function
+
+
+    ''' Generates a function that will return the rendering for the new-object form for the specific object name. '''
+    def generate_new_routing(self, object_):
+        def _function():
+            return render_template(self.get_name(object_).lower() + "_new" + HTML_FILE_SUFFIX, title="New" + self.get_name(object_))
+        return _function
+
+
+    ''' Generates a function that will add a specified object to the database. '''
+    def generate_add_routing(self, object_):
+        def _function():
+            fields = self.get_proto_fields(object_)
+            sql = "insert into %s (%s) values (%s)" % (self.get_name(object_).lower(), ", ".join(map(lambda field: field.name.lower(), fields)), ", ".join(map(lambda field: "?", fields)))
+            self.db.execute(sql, map(lambda field: request.form[field.name], fields))
+            self.db.commit()
+
+            return redirect('/%s/%s/' % (self.get_name(object_).lower(), request.form['id']))
         return _function
 
 
     ''' Builds the URL routings from the objects we have. '''
-    def build_routings(self):
-        for generated_name in self.generated_names:
-            self.app.add_url_rule('/' + generated_name.lower() + '/', generated_name.lower(), self.generate_routing(generated_name))
+    def build_routing(self, object_):
+        lower_name = self.get_name(object_).lower()
+        self.app.add_url_rule('/%s/' % lower_name, "%s_list" % lower_name, self.generate_list_routing(object_)) # List
+        self.app.add_url_rule('/%s/<id>/' % lower_name, "%s_view" % lower_name, self.generate_view_routing(object_)) # View
+        self.app.add_url_rule('/%s/new/' % lower_name, "%s_new" % lower_name, self.generate_new_routing(object_)) # New
+        self.app.add_url_rule('/%s/add/' % lower_name, "%s_add" % lower_name, self.generate_add_routing(object_), methods=["POST"]) # Add
 
 
     ''' Returns a list of the fields on an object generated by Protocol Buffers. '''
     def get_proto_fields(self, object_):
         return object_.DESCRIPTOR.fields
+
+
+    ''' Returns the name of the type object '''
+    def get_name(self, object_):
+        return object_.__class__.__name__
 
 
     ''' Builds and outputs a schema file for the list of objects given. '''
@@ -227,12 +328,13 @@ class Cruddy:
         for object_ in objects:
             name = object_.__class__.__name__.lower()
             output_file.write("drop table if exists %s;\ncreate table %s (\n" % (name, name))
+            column_descriptors = []
             for field in self.get_proto_fields(object_):
                 column_name = field.name
-                column_type = self.type_hash[field.type]
+                column_type = self.type_hash[field.type].replace("int32", "integer")
                 if field.name is "id":
                     column_type += " primary key autoincrement"
-                schema_string = "  %s %s,\n" % (column_name, column_type) 
-                output_file.write(schema_string)
+                column_descriptors.append("  %s %s" % (column_name, column_type))
+            output_file.write(",\n".join(column_descriptors))
             output_file.write(");")
         output_file.close()

@@ -1,6 +1,5 @@
 TODO
 ==============================================================================
 
-- Create an add/view objects template.
-- Create a list all objects template.
+- Fix the add and double-check view and list.
 - Properly modularize the class.
