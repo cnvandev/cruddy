@@ -1,5 +1,11 @@
 TODO
 ==============================================================================
 
-- Fix the add and double-check view and list.
-- Properly modularize the class.
+- Oh god, motherfucking *everything*. Moved stuff into HTMLGenerator.py,
+  DBStorage.py and a simple everything-class called utilities.py. Will
+  probably want to move everything out of utilities.py and into some kind of
+  self-contained object-parsing function to allow for easier retrieval.
+- Similarly, I want to abstract the objects behind this meta-object wall so
+  that I don't have to deal with this type hash bullshit and keep everything
+  nice and clean. Meta-objects.
+- Fix the add and double-check view and list...get it to work -_-""
