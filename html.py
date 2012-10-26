@@ -1,3 +1,4 @@
+import os
 from utilities import get_proto_fields, get_name, source_dir, destination_dir, html_dir, static_dir, PROTO_FILE_SUFFIX, PYTHON_FILE_SUFFIX, HTML_FILE_SUFFIX, PYTHON_GENERATED_SUFFIX, PROTO_TYPE_PREFIX
 
 class HTMLGenerator:
@@ -14,16 +15,16 @@ class HTMLGenerator:
 
     ''' Clears the HTML page directory '''
     def clear_html_pages(self):
-        html_files = os.listdir(self.html_dir)
+        html_files = os.listdir(html_dir)
         for html_file in html_files:
-            path = os.path.join(self.html_dir, html_file)
+            path = os.path.join(html_dir, html_file)
             if os.path.isfile(path):
                 os.unlink(path)
 
 
     def generate_list_page(self, object_):
-        name = self.get_name(object_)
-        output_file = open(os.path.join(self.html_dir, name.lower() + "_list" + HTML_FILE_SUFFIX), 'w')
+        name = get_name(object_)
+        output_file = open(os.path.join(html_dir, name.lower() + "_list" + HTML_FILE_SUFFIX), 'w')
         output_file.write('''
             {% extends "base.html" %}
             {% block body %}
@@ -40,13 +41,13 @@ class HTMLGenerator:
 
     ''' Generates an HTML page for the object! '''
     def generate_view_page(self, object_):
-        name = self.get_name(object_)
-        output_file = open(os.path.join(self.html_dir, name.lower() + "_view" + HTML_FILE_SUFFIX), 'w')
+        name = get_name(object_)
+        output_file = open(os.path.join(html_dir, name.lower() + "_view" + HTML_FILE_SUFFIX), 'w')
         output_file.write('''
             {% extends "base.html" %}
             {% block body %}\n''')
-        for field in self.get_proto_fields(object_):
-            output_file.write('''<p>{{ entry.%s }} <span class="muted">%s</span></p>''' % (field.name, self.type_hash[field.type]))
+        for field in get_proto_fields(object_):
+            output_file.write('''<p>{{ entry.%s }} <span class="muted">%s</span></p>''' % (field.name, self.cruddy.get_type_hash()[field.type]))
 
         output_file.write('''
             {% endblock %}\n''')
@@ -54,14 +55,14 @@ class HTMLGenerator:
 
 
     def generate_new_page(self, object_):
-        name = self.get_name(object_)
-        output_file = open(os.path.join(self.html_dir, name.lower() + "_new" + HTML_FILE_SUFFIX), 'w')
+        name = get_name(object_)
+        output_file = open(os.path.join(html_dir, name.lower() + "_new" + HTML_FILE_SUFFIX), 'w')
 
         output_file.write('''
             {% extends "base.html" %}
             {% block body %}\n''')
         output_file.write('''<form action="/%s/add/" method="POST">''' % name.lower())
-        for field in self.get_proto_fields(object_):
+        for field in get_proto_fields(object_):
             output_file.write('''<p>%s <input type="text" name="%s"></p>''' % (field.name, field.name.lower()))
         
         output_file.write('''
@@ -72,7 +73,7 @@ class HTMLGenerator:
 
 
     def generate_base_page(self):
-        output_file = open(os.path.join(self.html_dir, "base" + HTML_FILE_SUFFIX), 'w')
+        output_file = open(os.path.join(html_dir, "base" + HTML_FILE_SUFFIX), 'w')
         output_file.write(self.generate_base())
         output_file.close()
 

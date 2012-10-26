@@ -1,5 +1,6 @@
 from __future__ import with_statement
 import sqlite3
+from contextlib import closing
 from utilities import get_proto_fields, get_name
 
 class DBStorage:
@@ -15,7 +16,7 @@ class DBStorage:
     def __init__(self, cruddy):
         self.cruddy = cruddy
         self.generate_all_schema(cruddy.get_objects())
-        self.setup_db()
+        self.setup_db(self.schema_file)
 
 
     ''' Returns a database connection to use. YOU are required to close it! Don't forget! '''
@@ -35,7 +36,7 @@ class DBStorage:
     def generate_all_schema(self, objects):
         output_file = open(self.schema_file, 'w')
         for object_ in objects:
-            output_file.write(generate_schema(object_))
+            output_file.write(self.generate_schema(object_))
         output_file.close
 
 
@@ -48,7 +49,7 @@ class DBStorage:
         column_descriptors = []
         for field in fields:
             column_name = field.name
-            column_type = self.type_hash[field.type].replace("int32", "integer")
+            column_type = self.cruddy.get_type_hash()[field.type].replace("int32", "integer")
             if field.name is "id":
                 column_type += " primary key autoincrement"
             column_descriptors.append("  %s %s" % (column_name, column_type))
@@ -58,11 +59,22 @@ class DBStorage:
         return schema_sql
 
 
-    def get_list_sql(self, objects):
-        cur = self.db.execute('select %s from %s order by id desc' % (", ".join(map(lambda field: field.name.lower(), fields)), object_name))
-        entries = []
-        for row in cur.fetchall():
-            entry = {}
-            for index in range(len(row)):
-                entry[fields[index]] = row[index]
-            entries.append(entry)
+    def get_list_sql(self, object_):
+        name = get_name(object_).lower()
+        fields = get_proto_fields(object_)
+
+        return 'select %s from %s order by id desc' % (", ".join(map(lambda field: field.name.lower(), fields)), name)
+
+
+    def get_add_sql(self, object_):
+        name = get_name(object_).lower()
+        fields = get_proto_fields(object_)
+
+        return "insert into %s (%s) values (%s)" % (name, ", ".join(map(lambda field: field.name.lower(), fields)), ", ".join(map(lambda field: "?", fields)))
+
+
+    def get_view_sql(self, object_):
+        name = get_name(object_).lower()
+        fields = get_proto_fields(object_)
+
+        return 'select %s from %s where id = %s' % (", ".join(map(lambda field: field.name.lower(), fields)), name, fields['id'])
