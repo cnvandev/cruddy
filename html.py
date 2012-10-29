@@ -1,6 +1,5 @@
 import os
-from utilities import get_proto_fields, get_name, source_dir, destination_dir, html_dir, static_dir, PROTO_FILE_SUFFIX, PYTHON_FILE_SUFFIX, HTML_FILE_SUFFIX, PYTHON_GENERATED_SUFFIX, PROTO_TYPE_PREFIX
-
+from utilities import source_dir, destination_dir, html_dir, static_dir, HTML_FILE_SUFFIX, PROTO_FILE_SUFFIX, PYTHON_FILE_SUFFIX, PYTHON_GENERATED_SUFFIX, PROTO_TYPE_PREFIX
 class HTMLGenerator:
 
     def __init__(self, cruddy):
@@ -22,9 +21,8 @@ class HTMLGenerator:
                 os.unlink(path)
 
 
-    def generate_list_page(self, object_):
-        name = get_name(object_)
-        output_file = open(os.path.join(html_dir, name.lower() + "_list" + HTML_FILE_SUFFIX), 'w')
+    def generate_list_page(self, meta_object):
+        output_file = open(os.path.join(html_dir, meta_object.name.lower() + "_list" + HTML_FILE_SUFFIX), 'w')
         output_file.write('''
             {% extends "base.html" %}
             {% block body %}
@@ -32,7 +30,7 @@ class HTMLGenerator:
               <h2>{{ entry.name }}</h2>
             {% else %}''')
         output_file.write('''
-              <em>Nothing found! Maybe you should <a href="/%s/new/">add a new one</a>?</em>\n''' % name.lower()) 
+              <em>Nothing found! Maybe you should <a href="/%s/new/">add a new one</a>?</em>\n''' % meta_object.name.lower()) 
         output_file.write('''
             {% endfor %}
             {% endblock %}\n''')
@@ -40,13 +38,12 @@ class HTMLGenerator:
 
 
     ''' Generates an HTML page for the object! '''
-    def generate_view_page(self, object_):
-        name = get_name(object_)
-        output_file = open(os.path.join(html_dir, name.lower() + "_view" + HTML_FILE_SUFFIX), 'w')
+    def generate_view_page(self, meta_object):
+        output_file = open(os.path.join(html_dir, meta_object.name.lower() + "_view" + HTML_FILE_SUFFIX), 'w')
         output_file.write('''
             {% extends "base.html" %}
             {% block body %}\n''')
-        for field in get_proto_fields(object_):
+        for field in meta_object.fields:
             output_file.write('''<p>{{ entry.%s }} <span class="muted">%s</span></p>''' % (field.name, self.cruddy.get_type_hash()[field.type]))
 
         output_file.write('''
@@ -54,15 +51,14 @@ class HTMLGenerator:
         output_file.close()
 
 
-    def generate_new_page(self, object_):
-        name = get_name(object_)
-        output_file = open(os.path.join(html_dir, name.lower() + "_new" + HTML_FILE_SUFFIX), 'w')
+    def generate_new_page(self, meta_object):
+        output_file = open(os.path.join(html_dir, meta_object.name.lower() + "_new" + HTML_FILE_SUFFIX), 'w')
 
         output_file.write('''
             {% extends "base.html" %}
             {% block body %}\n''')
-        output_file.write('''<form action="/%s/add/" method="POST">''' % name.lower())
-        for field in get_proto_fields(object_):
+        output_file.write('''<form action="/%s/add/" method="POST">''' % meta_object.name.lower())
+        for field in meta_object.fields:
             output_file.write('''<p>%s <input type="text" name="%s"></p>''' % (field.name, field.name.lower()))
         
         output_file.write('''

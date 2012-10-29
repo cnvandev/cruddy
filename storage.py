@@ -1,7 +1,6 @@
 from __future__ import with_statement
 import sqlite3
 from contextlib import closing
-from utilities import get_proto_fields, get_name
 
 class DBStorage:
     DEBUG = True
@@ -33,21 +32,20 @@ class DBStorage:
 
 
     ''' Builds and outputs a schema file for the list of objects given. '''
-    def generate_all_schema(self, objects):
+    def generate_all_schema(self, meta_objects):
         output_file = open(self.schema_file, 'w')
-        for object_ in objects:
-            output_file.write(self.generate_schema(object_))
+        for meta_object in self.cruddy.meta_objects.objects:
+            output_file.write(self.generate_schema(meta_object))
         output_file.close
 
 
     ''' Builds a SQL statement that defines a schema for a table that can hold the given object. '''
-    def generate_schema(self, object_):
-        name = get_name(object_).lower()
-        fields = get_proto_fields(object_)
+    def generate_schema(self, meta_object):
+        name = meta_object.name.lower()
 
         schema_sql = "drop table if exists %s;\ncreate table %s (\n" % (name, name)
         column_descriptors = []
-        for field in fields:
+        for field in meta_object.fields:
             column_name = field.name
             column_type = self.cruddy.get_type_hash()[field.type].replace("int32", "integer")
             if field.name is "id":
@@ -59,22 +57,22 @@ class DBStorage:
         return schema_sql
 
 
-    def get_list_sql(self, object_):
-        name = get_name(object_).lower()
-        fields = get_proto_fields(object_)
+    def get_list_sql(self, meta_object):
+        name = meta_object.name.lower()
+        fields = meta_object.fields
 
         return 'select %s from %s order by id desc' % (", ".join(map(lambda field: field.name.lower(), fields)), name)
 
 
-    def get_add_sql(self, object_):
-        name = get_name(object_).lower()
-        fields = get_proto_fields(object_)
+    def get_add_sql(self, meta_object):
+        name = meta_object.name.lower()
+        fields = meta_object.fields
 
         return "insert into %s (%s) values (%s)" % (name, ", ".join(map(lambda field: field.name.lower(), fields)), ", ".join(map(lambda field: "?", fields)))
 
 
-    def get_view_sql(self, object_):
-        name = get_name(object_).lower()
-        fields = get_proto_fields(object_)
+    def get_view_sql(self, meta_object):
+        name = meta_object.name.lower()
+        fields = meta_object.fields
 
         return 'select %s from %s where id = %s' % (", ".join(map(lambda field: field.name.lower(), fields)), name, fields['id'])

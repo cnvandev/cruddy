@@ -1,6 +1,9 @@
 templates/*
 objects/*
 protos/*
+static/*
+bootstrap.zip
+.DS_Store
 *.pyc
 *.sql
 *.db
