@@ -22,6 +22,7 @@ class Cruddy:
         self.meta_objects = MetaObjects(self)
         self.storage = DBStorage(self)
         self.html = HTMLGenerator(self)
+        self.register_db_connections()
 
         # Create the HTML routings.
         for generated_object in self.meta_objects.objects:
@@ -32,7 +33,7 @@ class Cruddy:
         if "static" not in files:
             if "bootstrap.zip" not in files:
                 print "Downloading Twitter Bootstrap..."
-                urllib.urlretrieve ("http://twitter.github.com/bootstrap/assets/bootstrap.zip", "bootstrap.zip")
+                urllib.urlretrieve("http://twitter.github.com/bootstrap/assets/bootstrap.zip", "bootstrap.zip")
 
             with ZipFile('bootstrap.zip', 'r') as myzip:
                 myzip.extractall()
@@ -41,8 +42,8 @@ class Cruddy:
             print "Done!"
 
 
-    ''' Verifies the structure of the current working directory to make sure we have everything we need. '''
     def verify_structure(self):
+        ''' Verifies the structure of the current working directory to make sure we have everything we need. '''
         # Make sure the source directory exists and has protos in it.
         files = os.listdir(".")
         if source_dir not in files:
@@ -60,8 +61,8 @@ class Cruddy:
         self.ensure_dir(html_dir, files)
 
 
-    ''' Ensures that a given directory exists in the current working directory. '''
     def ensure_dir(self, dirname, files):
+        ''' Ensures that a given directory exists in the current working directory. '''
         if dirname not in files:
             os.mkdir(dirname)
 
@@ -78,8 +79,8 @@ class Cruddy:
         return self.meta_objects.objects
 
 
-    ''' Generates a function that will return the listing for the specific object name '''
     def generate_list_routing(self, meta_object):
+        ''' Generates a function that will return the listing for the specific object name '''
         def _function():
             name = meta_object.name.lower()
             entries = self.storage.get_entries(meta_object)
@@ -87,33 +88,33 @@ class Cruddy:
         return _function
 
 
-    ''' Generates a function that will return the rendering for the specific object name '''
     def generate_view_routing(self, meta_object):
+        ''' Generates a function that will return the rendering for the specific object name '''
         def _function(**kwargs):
             entry = self.storage.get_entry(meta_object, kwargs["id"])
             title = meta_object.name
-            return render_template(meta_object.name.lower() + "_view" + HTML_FILE_SUFFIX, title=title)
+            return render_template(meta_object.name.lower() + "_view" + HTML_FILE_SUFFIX, title=title, entry=entry)
         return _function
 
 
-    ''' Generates a function that will return the rendering for the new-object form for the specific object name. '''
     def generate_new_routing(self, meta_object):
+        ''' Generates a function that will return the rendering for the new-object form for the specific object name. '''
         def _function():
             return render_template(meta_object.name.lower() + "_new" + HTML_FILE_SUFFIX, title="New" + meta_object.name)
         return _function
 
 
-    ''' Generates a function that will add a specified object to the database. '''
     def generate_add_routing(self, meta_object):
+        ''' Generates a function that will add a specified object to the database. '''
         def _function():
             fields = meta_object.fields
-            self.storage.add_object(request.form)
+            self.storage.add_entry(meta_object, request.form, request.form['id'])
             return redirect('/%s/%s/' % (meta_object.name.lower(), request.form['id']))
         return _function
 
 
-    ''' Builds the URL routings from the objects we have. '''
     def build_routing(self, meta_object):
+        ''' Builds the URL routings from the objects we have. '''
         lower_name = meta_object.name.lower()
         self.app.add_url_rule('/%s/' % lower_name, "%s_list" % lower_name, self.generate_list_routing(meta_object)) # List
         self.app.add_url_rule('/%s/<id>/' % lower_name, "%s_view" % lower_name, self.generate_view_routing(meta_object)) # View

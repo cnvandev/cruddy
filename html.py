@@ -12,8 +12,8 @@ class HTMLGenerator:
             self.generate_new_page(generated_object)
 
 
-    ''' Clears the HTML page directory '''
     def clear_html_pages(self):
+        ''' Clears the HTML page directory '''
         html_files = os.listdir(html_dir)
         for html_file in html_files:
             path = os.path.join(html_dir, html_file)
@@ -22,12 +22,16 @@ class HTMLGenerator:
 
 
     def generate_list_page(self, meta_object):
+        ''' Generates an HTML page for a listing of all instances of the given meta_object. '''
         output_file = open(os.path.join(html_dir, meta_object.name.lower() + "_list" + HTML_FILE_SUFFIX), 'w')
         output_file.write('''
             {% extends "base.html" %}
             {% block body %}
             {% for entry in entries %}
-              <h2>{{ entry.name }}</h2>
+            ''')
+        output_file.write('''
+              <h2><a href="/%s/{{ entry.id }}/">{{ entry.name }}</a></h2>''' % meta_object.name.lower())
+        output_file.write('''
             {% else %}''')
         output_file.write('''
               <em>Nothing found! Maybe you should <a href="/%s/new/">add a new one</a>?</em>\n''' % meta_object.name.lower()) 
@@ -37,14 +41,18 @@ class HTMLGenerator:
         output_file.close()
 
 
-    ''' Generates an HTML page for the object! '''
     def generate_view_page(self, meta_object):
+        ''' Generates an HTML page for the object! '''
         output_file = open(os.path.join(html_dir, meta_object.name.lower() + "_view" + HTML_FILE_SUFFIX), 'w')
         output_file.write('''
             {% extends "base.html" %}
             {% block body %}\n''')
         for field in meta_object.fields:
             output_file.write('''<p>{{ entry.%s }} <span class="muted">%s</span></p>''' % (field["name"], field["type"]))
+        
+        output_file.write('''
+            <p>Go back to the <a href="/%s/">list</p>
+            ''' % meta_object.name.lower())
         output_file.write('''
             {% endblock %}\n''')
         output_file.close()
@@ -63,6 +71,11 @@ class HTMLGenerator:
         output_file.write('''
                 <input type="submit" text="Submit">
             </form>
+            ''')
+        output_file.write('''
+            <p>Go back to the <a href="/%s/">list</p>
+            ''' % meta_object.name.lower())
+        output_file.write('''
             {% endblock %}\n''')
         output_file.close()
 

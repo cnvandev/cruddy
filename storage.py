@@ -14,58 +14,76 @@ class DBStorage:
 
     def __init__(self, cruddy):
         self.cruddy = cruddy
+        self.db_connection = None
         self.generate_all_schema(cruddy.get_objects())
         self.setup_db(self.schema_file)
 
 
-    ''' Opens the storage for use. YOU are required to close it! Don't forget! '''
     def open(self):
+        ''' Opens the storage for use. YOU are required to close it! Don't forget! '''
         self.db_connection = sqlite3.connect(self.database)
 
 
-    ''' Closes the opened storage system after use. '''
     def close(self):
-        self.connection.close()
+        ''' Closes the opened storage system after use. '''
+        self.db_connection.close()
+        self.db_connection = None
 
 
-    ''' Returns a database connection object. '''
     def setup_db(self, schema_file):
+        ''' Returns a database connection object. '''
         self.open()
-        f = open(schema_file)
-        self.db_connection.cursor().executescript(f.read())
-        self.db_connection.commit()
+        self.load_schema(schema_file)
         self.close()
 
 
-    ''' Gets a list of entries from storage. '''    
+    def load_schema(self, schema_file):
+        f = open(schema_file)
+        self.db_connection.cursor().executescript(f.read())
+        self.db_connection.commit()
+
+
     def get_entries(self, meta_object):
+        ''' Gets a list of entries from storage. '''    
         sql = self.get_list_sql(meta_object)
-        return self.db_connection.execute(sql)
+        cur = self.db_connection.execute(sql)
+        entries = [self.dict_factory(cur, result) for result in cur.fetchall()]
+        return entries
 
 
-    ''' Gets a single entry from storage. '''    
     def get_entry(self, meta_object, id):
+        ''' Gets a single entry from storage. '''
         sql = self.get_view_sql(meta_object)
         cur = self.db_connection.execute(sql, id)
-        return cur.fetchall()[0]
+        return self.dict_factory(cur, cur.fetchone())
 
 
-    ''' Puts a single entry into storage. '''
-    def add_entry(self, meta_object, id):
+    def dict_factory(self, cursor, row):
+        ''' Returns a dict of cursor results with the column names as keys. '''
+        d = {}
+        for idx, col in enumerate(cursor.description):
+            d[col[0]] = row[idx]
+        return d
+
+
+    def add_entry(self, meta_object, data, id):
+        ''' Puts a single entry into storage. '''
         sql = self.get_add_sql(meta_object)
-        self.db_connection.execute(sql)
+        data_for_object = map(lambda field: data[field["name"]], meta_object.fields)
+        self.db_connection.execute(sql, data_for_object)
+        self.db_connection.commit()
 
 
-    ''' Builds and outputs a schema file for the list of objects given. '''
     def generate_all_schema(self, meta_objects):
+        ''' Builds and outputs a schema file for the list of objects given. '''
         output_file = open(self.schema_file, 'w')
         for meta_object in self.cruddy.meta_objects.objects:
             output_file.write(self.generate_schema(meta_object))
         output_file.close
 
 
-    ''' Builds a SQL statement that defines a schema for a table that can hold the given object. '''
     def generate_schema(self, meta_object):
+        ''' Builds a SQL statement that defines a schema for a table that can hold the given object. '''
         name = meta_object.name.lower()
 
         schema_sql = "drop table if exists %s;\ncreate table %s (\n" % (name, name)
@@ -100,4 +118,4 @@ class DBStorage:
         name = meta_object.name.lower()
         fields = meta_object.fields
 
-        return 'select %s from %s where id = %s' % (", ".join(map(lambda field: field["name"].lower(), fields)), name, fields['id'])
+        return 'select %s from %s where id = ?' % (", ".join(map(lambda field: field["name"].lower(), fields)), name)

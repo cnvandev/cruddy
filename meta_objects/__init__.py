@@ -16,8 +16,8 @@ class MetaObjects:
         self.objects = self.generate_protos()
 
 
-    ''' Verifies the structure of the current working directory to make sure we have everything we need. '''
     def verify_structure(self):
+        ''' Verifies the structure of the current working directory to make sure we have everything we need. '''
         # Make sure the source directory exists and has protos in it.
         files = os.listdir(".")
         if source_dir not in files:
@@ -35,14 +35,14 @@ class MetaObjects:
         self.ensure_dir(html_dir, files)
 
 
-    ''' Ensures that a given directory exists in the current working directory. '''
     def ensure_dir(self, dirname, files):
+        ''' Ensures that a given directory exists in the current working directory. '''
         if dirname not in files:
             os.mkdir(dirname)
 
 
-    ''' Generates our MetaObjects (and the underlying Python objects) from the proto files. '''
     def generate_protos(self):
+        ''' Generates our MetaObjects (and the underlying Python objects) from the proto files. '''
         generated = []
         for proto in os.listdir(source_dir):
             generated.append(MetaObject(self, proto))
