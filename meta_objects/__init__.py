@@ -45,7 +45,7 @@ class MetaObjects:
     def generate_protos(self):
         generated = []
         for proto in os.listdir(source_dir):
-            generated.append(MetaObject(proto))
+            generated.append(MetaObject(self, proto))
         return generated
 
 

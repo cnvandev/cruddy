@@ -20,7 +20,7 @@ class Cruddy:
         # At this point it's just a few method calls.
         self.verify_structure()
         self.meta_objects = MetaObjects(self)
-        self.db = DBStorage(self)
+        self.storage = DBStorage(self)
         self.html = HTMLGenerator(self)
 
         # Create the HTML routings.
@@ -81,9 +81,8 @@ class Cruddy:
     ''' Generates a function that will return the listing for the specific object name '''
     def generate_list_routing(self, meta_object):
         def _function():
-            fields = meta_object.fields
             name = meta_object.name.lower()
-            entries = self.db.get_list_sql(meta_object)
+            entries = self.storage.get_entries(meta_object)
             return render_template(name + "_list" + HTML_FILE_SUFFIX, title=name, entries=entries)
         return _function
 
@@ -91,14 +90,9 @@ class Cruddy:
     ''' Generates a function that will return the rendering for the specific object name '''
     def generate_view_routing(self, meta_object):
         def _function(**kwargs):
-            fields = meta_object.fields
-            name = meta_object.name.lower()
-            sql = self.db.get_view_sql(meta_object)
-            cur = self.db.execute(sql)
-            args = {}
-            args["entry"] = cur.fetchall()[0]
-            args["title"] = meta_object.name
-            return render_template(meta_object.name.lower() + "_view" + HTML_FILE_SUFFIX, **args)
+            entry = self.storage.get_entry(meta_object, kwargs["id"])
+            title = meta_object.name
+            return render_template(meta_object.name.lower() + "_view" + HTML_FILE_SUFFIX, title=title)
         return _function
 
 
@@ -113,10 +107,7 @@ class Cruddy:
     def generate_add_routing(self, meta_object):
         def _function():
             fields = meta_object.fields
-            sql = self.db.get_add_sql(meta_object)
-            self.db.execute(sql, map(lambda field: request.form[field.name], fields))
-            self.db.commit()
-
+            self.storage.add_object(request.form)
             return redirect('/%s/%s/' % (meta_object.name.lower(), request.form['id']))
         return _function
 
@@ -132,9 +123,9 @@ class Cruddy:
 
     def register_db_connections(self):
         def before_request():
-            self.db = self.connect_db()
+            self.storage.open()
         def after_request(response):
-            self.db.close()
+            self.storage.close()
             return response
         self.app.before_request(before_request)
         self.app.after_request(after_request)

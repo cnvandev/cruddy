@@ -18,17 +18,42 @@ class DBStorage:
         self.setup_db(self.schema_file)
 
 
-    ''' Returns a database connection to use. YOU are required to close it! Don't forget! '''
-    def connect_db(self):
-        return sqlite3.connect(self.database)
+    ''' Opens the storage for use. YOU are required to close it! Don't forget! '''
+    def open(self):
+        self.db_connection = sqlite3.connect(self.database)
+
+
+    ''' Closes the opened storage system after use. '''
+    def close(self):
+        self.connection.close()
 
 
     ''' Returns a database connection object. '''
     def setup_db(self, schema_file):
-        with closing(self.connect_db()) as db:
-            with open(schema_file) as f:
-                db.cursor().executescript(f.read())
-            db.commit()
+        self.open()
+        f = open(schema_file)
+        self.db_connection.cursor().executescript(f.read())
+        self.db_connection.commit()
+        self.close()
+
+
+    ''' Gets a list of entries from storage. '''    
+    def get_entries(self, meta_object):
+        sql = self.get_list_sql(meta_object)
+        return self.db_connection.execute(sql)
+
+
+    ''' Gets a single entry from storage. '''    
+    def get_entry(self, meta_object, id):
+        sql = self.get_view_sql(meta_object)
+        cur = self.db_connection.execute(sql, id)
+        return cur.fetchall()[0]
+
+
+    ''' Puts a single entry into storage. '''
+    def add_entry(self, meta_object, id):
+        sql = self.get_add_sql(meta_object)
+        self.db_connection.execute(sql)
 
 
     ''' Builds and outputs a schema file for the list of objects given. '''
@@ -46,9 +71,9 @@ class DBStorage:
         schema_sql = "drop table if exists %s;\ncreate table %s (\n" % (name, name)
         column_descriptors = []
         for field in meta_object.fields:
-            column_name = field.name
-            column_type = self.cruddy.get_type_hash()[field.type].replace("int32", "integer")
-            if field.name is "id":
+            column_name = field["name"]
+            column_type = field["type"].replace("int32", "integer")
+            if field["name"] is "id":
                 column_type += " primary key autoincrement"
             column_descriptors.append("  %s %s" % (column_name, column_type))
         schema_sql += ",\n".join(column_descriptors)
@@ -61,18 +86,18 @@ class DBStorage:
         name = meta_object.name.lower()
         fields = meta_object.fields
 
-        return 'select %s from %s order by id desc' % (", ".join(map(lambda field: field.name.lower(), fields)), name)
+        return 'select %s from %s order by id desc' % (", ".join(map(lambda field: field["name"].lower(), fields)), name)
 
 
     def get_add_sql(self, meta_object):
         name = meta_object.name.lower()
         fields = meta_object.fields
 
-        return "insert into %s (%s) values (%s)" % (name, ", ".join(map(lambda field: field.name.lower(), fields)), ", ".join(map(lambda field: "?", fields)))
+        return "insert into %s (%s) values (%s)" % (name, ", ".join(map(lambda field: field["name"].lower(), fields)), ", ".join(map(lambda field: "?", fields)))
 
 
     def get_view_sql(self, meta_object):
         name = meta_object.name.lower()
         fields = meta_object.fields
 
-        return 'select %s from %s where id = %s' % (", ".join(map(lambda field: field.name.lower(), fields)), name, fields['id'])
+        return 'select %s from %s where id = %s' % (", ".join(map(lambda field: field["name"].lower(), fields)), name, fields['id'])

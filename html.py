@@ -44,8 +44,7 @@ class HTMLGenerator:
             {% extends "base.html" %}
             {% block body %}\n''')
         for field in meta_object.fields:
-            output_file.write('''<p>{{ entry.%s }} <span class="muted">%s</span></p>''' % (field.name, self.cruddy.get_type_hash()[field.type]))
-
+            output_file.write('''<p>{{ entry.%s }} <span class="muted">%s</span></p>''' % (field["name"], field["type"]))
         output_file.write('''
             {% endblock %}\n''')
         output_file.close()
@@ -59,7 +58,7 @@ class HTMLGenerator:
             {% block body %}\n''')
         output_file.write('''<form action="/%s/add/" method="POST">''' % meta_object.name.lower())
         for field in meta_object.fields:
-            output_file.write('''<p>%s <input type="text" name="%s"></p>''' % (field.name, field.name.lower()))
+            output_file.write('''<p>%s <input type="text" name="%s"></p>''' % (field["name"], field["name"].lower()))
         
         output_file.write('''
                 <input type="submit" text="Submit">
