@@ -1,5 +1,6 @@
 from __future__ import with_statement
 import sqlite3
+import os
 from contextlib import closing
 
 class DBStorage:
@@ -15,8 +16,15 @@ class DBStorage:
     def __init__(self, cruddy):
         self.cruddy = cruddy
         self.db_connection = None
-        self.generate_all_schema(cruddy.get_objects())
-        self.setup_db(self.schema_file)
+
+        # If it exists, don't clobber it away!
+        destroy = "Y"
+        if os.path.exists(self.database):
+            destroy = raw_input("Database exists! Should I destroy? [Y]: ")
+
+        if destroy.lower() is "y":
+            self.generate_all_schema(cruddy.get_objects())
+            self.setup_db(self.schema_file)
 
 
     def open(self):
