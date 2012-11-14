@@ -1,4 +1,5 @@
 TODO
 ==============================================================================
 
-- Fix the add and double-check view and list...get it to work -_-""
+- Fix your existing-data function. See if it can be used before trying?
+- Now that it's working, style it a little bit.
