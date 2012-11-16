@@ -2,6 +2,8 @@ TODO
 ==============================================================================
 
 - Stop importing everything, clean this all up.
+- Verify the schema is valid for our objects, not that the database exists.
+- Verify the entire folder/file structure of twitter bootstrap, not that the folder is there.
 - "Static generator" module to create some static content templates (homepage, about, etc.)
 - Get a better way to generate the HTML. Maybe develop your own HTML-generation library.
 - On top of whatever HTML-generation solution you use, make a Twitter Bootstrap library to make generating the Bootstrap elements easier.
@@ -10,3 +12,5 @@ TODO
 - Now that it's working, style it a little bit.
 - Support elements that come up a lot, emails and pictures and links.
 - Support links between other elements.
+- Create a formal API for it.
+- Generate Android and iOS apps to access the data!
