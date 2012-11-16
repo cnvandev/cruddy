@@ -1,5 +1,12 @@
 TODO
 ==============================================================================
 
-- Fix your existing-data function. See if it can be used before trying?
+- Stop importing everything, clean this all up.
+- "Static generator" module to create some static content templates (homepage, about, etc.)
+- Get a better way to generate the HTML. Maybe develop your own HTML-generation library.
+- On top of whatever HTML-generation solution you use, make a Twitter Bootstrap library to make generating the Bootstrap elements easier.
+- Make a more flexible housekeeping module, maybe with a specific form for objects to ensure (like "ensure we have this file, if not download it from here. If it's a zip file, extract it" etc.)
+- Support JSON objects!
 - Now that it's working, style it a little bit.
+- Support elements that come up a lot, emails and pictures and links.
+- Support links between other elements.

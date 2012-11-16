@@ -2,9 +2,9 @@ from __future__ import with_statement
 import sqlite3
 import os
 from contextlib import closing
+import traceback
 
 class DBStorage:
-    DEBUG = True
 
     SECRET_KEY = 'some key'
     USERNAME = 'admin'
@@ -18,13 +18,18 @@ class DBStorage:
         self.db_connection = None
 
         # If it exists, don't clobber it away!
-        destroy = "Y"
-        if os.path.exists(self.database):
-            destroy = raw_input("Database exists! Should I destroy? [Y]: ")
+        try:
+            destroy_response = ""
+            if os.path.exists(self.database):
+                destroy_response = raw_input("Database exists! Should I DESTROY FOREVER, Y or N? [Y]: ")
 
-        if destroy.lower() is "y":
-            self.generate_all_schema(cruddy.get_objects())
-            self.setup_db(self.schema_file)
+            if destroy_response.lower() is "y" or not destroy_response:
+                print "Destroying existing database. This cannot be undone."
+                self.generate_all_schema(cruddy.get_objects())
+                self.setup_db(self.schema_file)
+        except KeyboardInterrupt:
+            print "\nFigure your shit out."
+            exit(1)
 
 
     def open(self):
@@ -103,7 +108,7 @@ class DBStorage:
                 column_type += " primary key autoincrement"
             column_descriptors.append("  %s %s" % (column_name, column_type))
         schema_sql += ",\n".join(column_descriptors)
-        schema_sql += ");"
+        schema_sql += "\n);"
 
         return schema_sql
 
