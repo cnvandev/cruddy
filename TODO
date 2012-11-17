@@ -7,8 +7,7 @@ TODO
 - Verify the entire folder/file structure of twitter bootstrap, not that the folder is there.
 - Make a more flexible housekeeping module, maybe with a specific form for objects to ensure (like "ensure we have this file, if not download it from here. If it's a zip file, extract it" etc.)
 
-- HTML-generation libraries are too thick for my tastes. Maybe develop your own HTML-generation library.
-- On top of whatever HTML-generation solution you use, make a Twitter Bootstrap library to make generating the Bootstrap elements easier.
+- Write Twitter Bootstrap library to make generating the Bootstrap elements easier.
 
 - Support links between other elements.
 
