@@ -1,7 +1,6 @@
 TODO
 ==============================================================================
 
-- Stop importing everything, clean this all up.
 - Verify the schema is valid for our objects, not that the database exists.
 - Verify the entire folder/file structure of twitter bootstrap, not that the folder is there.
 - "Static generator" module to create some static content templates (homepage, about, etc.)

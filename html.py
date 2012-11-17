@@ -1,5 +1,5 @@
 import os
-from utilities import source_dir, destination_dir, html_dir, static_dir, HTML_FILE_SUFFIX, PROTO_FILE_SUFFIX, PYTHON_FILE_SUFFIX, PYTHON_GENERATED_SUFFIX, PROTO_TYPE_PREFIX
+from utilities import html_dir, HTML_FILE_SUFFIX
 class HTMLGenerator:
 
     def __init__(self, cruddy):

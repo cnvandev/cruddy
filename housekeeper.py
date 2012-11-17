@@ -1,7 +1,7 @@
-import os, subprocess, sys
+import os
 import urllib
 from zipfile import ZipFile
-from utilities import source_dir, destination_dir, html_dir, static_dir, HTML_FILE_SUFFIX, PROTO_FILE_SUFFIX, PYTHON_FILE_SUFFIX, PYTHON_GENERATED_SUFFIX, PROTO_TYPE_PREFIX
+from utilities import source_dir, destination_dir, html_dir, static_dir, PROTO_FILE_SUFFIX, BOOTSTRAP_URL, ZIP_FILE_SUFFIX
 
 class Housekeeper:
 
@@ -40,14 +40,18 @@ class Housekeeper:
 
     def ensure_twitter_bootstrap(self):
         ''' Downloads Twitter Bootstrap and extracts it so we can use it. This could be done better. '''
-        files = os.listdir(".")
-        if "static" not in files:
-            if "bootstrap.zip" not in files:
-                print "Downloading Twitter Bootstrap..."
-                urllib.urlretrieve("http://twitter.github.com/bootstrap/assets/bootstrap.zip", "bootstrap.zip")
+        bootstrap_file = BOOTSTRAP_URL.split("/")[-1]
 
-            with ZipFile('bootstrap.zip', 'r') as myzip:
+        files = os.listdir(".")
+        if static_dir not in files:
+            if bootstrap_file not in files:
+                print "Downloading Twitter Bootstrap..."
+                urllib.urlretrieve(BOOTSTRAP_URL, bootstrap_file)
+
+            with ZipFile(bootstrap_file, 'r') as myzip:
                 myzip.extractall()
 
-            os.rename("bootstrap", "static")
+            # The folder name that the zipfile extracts to is the same as the zipfile name, sans suffix.
+            bootstrap_folder = bootstrap_file[0:-len(ZIP_FILE_SUFFIX)]
+            os.rename(bootstrap_folder, static_dir)
             print "Done!"

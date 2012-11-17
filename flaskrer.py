@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect
-from utilities import source_dir, destination_dir, html_dir, static_dir, HTML_FILE_SUFFIX, PROTO_FILE_SUFFIX, PYTHON_FILE_SUFFIX, PYTHON_GENERATED_SUFFIX, PROTO_TYPE_PREFIX
+from utilities import HTML_FILE_SUFFIX
 
 class Flaskrer:
 
