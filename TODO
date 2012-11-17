@@ -2,14 +2,18 @@ TODO
 ==============================================================================
 
 - Verify the schema is valid for our objects, not that the database exists.
-- Verify the entire folder/file structure of twitter bootstrap, not that the folder is there.
 - "Static generator" module to create some static content templates (homepage, about, etc.)
-- Get a better way to generate the HTML. Maybe develop your own HTML-generation library.
-- On top of whatever HTML-generation solution you use, make a Twitter Bootstrap library to make generating the Bootstrap elements easier.
+
+- Verify the entire folder/file structure of twitter bootstrap, not that the folder is there.
 - Make a more flexible housekeeping module, maybe with a specific form for objects to ensure (like "ensure we have this file, if not download it from here. If it's a zip file, extract it" etc.)
+
+- HTML-generation libraries are too thick for my tastes. Maybe develop your own HTML-generation library.
+- On top of whatever HTML-generation solution you use, make a Twitter Bootstrap library to make generating the Bootstrap elements easier.
+
+- Support links between other elements.
+
 - Support JSON objects!
 - Now that it's working, style it a little bit.
 - Support elements that come up a lot, emails and pictures and links.
-- Support links between other elements.
 - Create a formal API for it.
 - Generate Android and iOS apps to access the data!

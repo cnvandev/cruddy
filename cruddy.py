@@ -18,15 +18,6 @@ class Cruddy:
     def start(self):
         ''' Actually starts the app. '''
         self.flaskrer.run()
-
-
-    def get_app(self):
-        return self.app
-
-
-    def get_type_hash(self):
-        return self.meta_objects.type_hash
-
-
+        
     def get_objects(self):
         return self.meta_objects.objects
